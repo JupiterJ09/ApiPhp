@@ -239,10 +239,58 @@ public function putCursos($id, $datos) {
 }
 
     
-    public function deleteCursos(){
-        echo json_encode(["detalle" => "estas en la vista  delete cursos con controlador"]);
-        exit;
+public function deleteCursos($id) {
+    /*=============================================
+    Validar credenciales del cliente
+    =============================================*/
+    $clientes = ModeloClientes::getClientes("clientes");
+
+    if (isset($_SERVER['PHP_AUTH_USER']) && isset($_SERVER['PHP_AUTH_PW'])) {
+        foreach ($clientes as $key => $valueCliente) {
+            // Validar autenticación Basic
+            if (
+                $_SERVER['PHP_AUTH_USER'] === $valueCliente->id_cliente &&
+                $_SERVER['PHP_AUTH_PW'] === $valueCliente->llave_secreta
+            ) {
+                /*=============================================
+                Validar id creador del curso
+                =============================================*/
+                $curso = ModeloCursos::show("cursos", "clientes", $id);
+
+                foreach ($curso as $key => $valueCurso) {
+                    // Verificar si el cliente es el creador del curso
+                    if ($valueCurso->id_creador == $valueCliente->id) {
+
+                        /*
+                        echo json_encode("Estoy dentro del campo eliminar");
+                        exit;*/
+
+                        /*=============================================
+                        Eliminar el curso
+                        =============================================*/
+                        $delete = ModeloCursos::delete("cursos", $id);
+
+                        if ($delete == "ok") {
+                            $json = array(
+                                "status" => 200,
+                                "detalle" => "Se ha borrado el curso"
+                            );
+                            echo json_encode($json, true);
+                            return; // Terminar la ejecución
+                        }
+                    }
+                }
+            }
+        }
     }
+
+    // Si no se cumplen las condiciones (no autorizado o no es el creador)
+    $json = array(
+        "status" => 400,
+        "detalle" => "No tienes permisos para eliminar este curso"
+    );
+    echo json_encode($json, true);
+}
 
     public function show(int $id){
 
