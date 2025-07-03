@@ -74,15 +74,32 @@ switch ($route) {
                      $controller->show($id);   
                 break;   // obtener 1
                 case 'PUT':   
-                    $datos = json_decode(file_get_contents("php://input"), true);
+
+                    // 1. Leer input crudo
                     $raw = file_get_contents("php://input");
-                    var_dump($raw);   // <— debería mostrar la cadena JSON
-                    exit;
-                    echo "<pre>";
-                print_r($datos);
-                echo "</pre>";
-                return;
-                     $controller->putCursos($id,$datos);  
+                    /*var_dump($raw);
+                    exit;*/
+                
+                    // 2. Detectar formato
+                    if (stripos($_SERVER['CONTENT_TYPE'] ?? '', 'application/json') !== false) {
+                        $datos = json_decode($raw, true);
+                        echo "codificando en json";
+                        
+                    } else {
+                        // Soporte para x-www-form-urlencoded
+                        parse_str($raw, $datos);
+                    }
+                
+                    // 3. Validar
+                    if (empty($datos)) {
+                        http_response_code(400);
+                        echo json_encode(['error' => 'Datos vacíos o mal formateados']);
+                        return;
+                    }
+                
+                    // 4. Llamar al controlador
+                    $controller->putCursos($id, $datos);
+                                 
                       break;   // actualizar
                 case 'DELETE': $controller->deleteCursos($id);break;   // borrar
                 default:

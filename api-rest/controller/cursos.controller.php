@@ -107,13 +107,137 @@ class CursosController{
 }
 
       
+public function putCursos($id, $datos) {
 
-    public function putCursos(){
+    
 
+    /*=============================================
+    Validar credenciales del cliente
+    =============================================*/
+    $clientes = ModeloClientes::getClientes("clientes");
+
+    /*echo "<pre>Credenciales recibidas:\n";
+    echo "Usuario: " . ($_SERVER['PHP_AUTH_USER'] ?? 'NO PROPORCIONADO') . "\n";
+    echo "Contraseña: " . ($_SERVER['PHP_AUTH_PW'] ?? 'NO PROPORCIONADO') . "\n";
+    echo "</pre>";
+    exit; */ 
+    // Termina la ejecución para solo mostrar el debug
+
+    if (isset($_SERVER['PHP_AUTH_USER']) && isset($_SERVER['PHP_AUTH_PW'])) {
         
-        echo json_encode(["detalle" => "estas en la vista put  cursos con controlador"]);
-        exit;
+        /*echo "<pre>Credenciales recibidas:\n";
+        echo "Usuario: " . ($_SERVER['PHP_AUTH_USER'] ?? 'NO PROPORCIONADO') . "\n";
+        echo "Contraseña: " . ($_SERVER['PHP_AUTH_PW'] ?? 'NO PROPORCIONADO') . "\n";
+        echo "</pre>";
+        exit;*/
+
+        foreach ($clientes as $valueCliente) {
+
+            
+            if (
+                $_SERVER['PHP_AUTH_USER'] === $valueCliente->id_cliente &&
+                $_SERVER['PHP_AUTH_PW'] === $valueCliente->llave_secreta
+            ) {
+                $clienteArray = (array)$valueCliente; // Conversión a array
+                // Debug: Imprimir SOLO el cliente que coincide
+               
+                /*echo json_encode([
+                "status" => "match_found",
+                "cliente" => [
+                "id" => $clienteArray["id_cliente"],
+                "usarname" => $clienteArray["id"],
+                "nombre" => $clienteArray["nombre"],
+                "apellido" => $clienteArray["apellido"]
+                ]
+                ]);exit;
+                 
+
+                /*=============================================
+                Validar datos
+                =============================================*/
+                foreach ($datos as $key => $valueDatos) {
+
+                    if (
+                        isset($valueDatos) &&
+                        !preg_match('/^[()\=\&\$;\-_*"<>¿¡!,:.\0-9a-zA-ZñÑáéíóúÁÉÍÓÚ ]*$/u', $valueDatos)
+                    ) {
+                        echo json_encode([
+                            "status" => 404,
+                            "detalle" => "Error en el campo " . $key
+                        ], true);
+                        return;
+                    }
+                }
+
+                /*=============================================
+                Validar ID del creador
+                =============================================*/
+                $curso = ModeloCursos::show("cursos", "clientes", $id);
+                $arrayCurso = (array) $curso;
+                /*var_dump($curso);
+                exit;*/
+
+                foreach ($curso as $valueCurso) {
+
+                 /*echo json_encode(["id de cliente" => $clienteArray["id"],
+                  "id de cursos"  => $valueCurso->id_creador
+                 ]);*/
+
+                 
+                    //exit;  
+
+                    if ($valueCurso->id_creador === $clienteArray["id"]) {
+
+                        /*echo json_encode("Estoy dentro del if");
+                        exit;*/
+                        /*=============================================
+                        Enviar datos al modelo
+                        =============================================*/
+                        $datosActualizados = array(
+                            "id"          => $id,
+                            "titulo"      => $datos["titulo"],
+                            "descripcion" => $datos["descripcion"],
+                            "instructor"  => $datos["instructor"],
+                            "imagen"      => $datos["imagen"],
+                            "precio"      => $datos["precio"],
+                            "updated_at"  => date('Y-m-d H:i:s')
+                        );
+
+                        $update = ModeloCursos::update("cursos", $datosActualizados);
+
+                        if ($update == "ok") {
+                            echo json_encode([
+                                "status" => 200,
+                                "detalle" => "Registro exitoso, su curso ha sido actualizado"
+                            ], true);
+                            return;
+                        } else {
+                            echo json_encode([
+                                "status" => 500,
+                                "detalle" => "Error interno al actualizar el curso"
+                            ], true);
+                            return;
+                        }
+                    }
+                }
+
+                // Si encontró al cliente pero no es el creador
+                echo json_encode([
+                    "status" => 403,
+                    "detalle" => "No está autorizado para modificar este curso"
+                ], true);
+                return;
+            }
+        }
     }
+
+    // Si no hay coincidencia de credenciales
+    echo json_encode([
+        "status" => 403,
+        "detalle" => "Credenciales incorrectas o no proporcionadas"
+    ], true);
+}
+
     
     public function deleteCursos(){
         echo json_encode(["detalle" => "estas en la vista  delete cursos con controlador"]);
