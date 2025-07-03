@@ -305,8 +305,20 @@ public function deleteCursos($id) {
 
                     //mostrar todos los cursos
                     $cursos = ModeloCursos::show("cursos","clientes",$id);
-                    echo json_encode(["detalle" => $cursos]);
-                    exit;
+
+                    if (empty($cursos)) {
+                        echo json_encode([
+                            "status" => 404,
+                            "detalle" => "No existe un curso con ese ID"
+                        ]);
+                        exit;
+                    } else {
+                        echo json_encode([
+                            "status" => 200,
+                            "detalle" => $cursos
+                        ]);
+                    }
+                    
                 }
             
             }
